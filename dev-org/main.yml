@@ -1,0 +1,77 @@
+Skip to content
+Search or jump to…
+Pull requests
+Issues
+Marketplace
+Explore
+ 
+@saikrishna9052 
+saikrishna9052
+/
+sfdc
+Public
+Code
+Issues
+Pull requests
+Actions
+Projects
+Wiki
+Security
+Insights
+Settings
+sfdc/.github/workflows/main.yml
+@saikrishna9052
+saikrishna9052 Create main.yml
+Latest commit bc59c6f 12 minutes ago
+ History
+ 1 contributor
+47 lines (42 sloc)  1.38 KB
+   
+# This workflow will build and deploy to SIT01
+name: On Pull Request
+on:
+  push:
+    branches: [main]
+    paths:
+            - 'force-app/**'
+  pull_request:
+    branches: [main]
+    paths:
+            - 'force-app/**'         
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.ref }}
+        fetch-depth: 0
+      if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event_name == 'push'
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '>=14'
+        check-latest: true
+   
+    - name: Install Salesforce CLI
+      run: |
+        npm install sfdx-cli
+        node_modules/sfdx-cli/bin/run --version
+        node_modules/sfdx-cli/bin/run plugins --core
+    - name: 'Populate auth file with SFDX_URL secret'
+      shell: bash
+      run: 'echo ${{ secrets.SFDX_LR_TEST_URL}} > SFDX_SIT01'
+
+    - name: 'Authenticate against dev hub'
+      run: node_modules/sfdx-cli/bin/run force:auth:sfdxurl:store -f SFDX_SIT01 -s -a 
+        
+    - name: Run Apex test
+      run: 
+        node_modules/sfdx-cli/bin/run force:apex:test:run --resultformat tap --codecoverage -c -r human
+        
+    - name: Deploy source
+      id: Deploy
+      if: github.event_name == 'push'
+      run:
+        node_modules/sfdx-cli/bin/run force:source:deploy -p diffdeploy/force-app -u LRQA --json --loglevel fatal
+
