@@ -34,7 +34,7 @@ jobs:
       run: 'echo ${{ secrets.SFDX_LR_TEST_URL}} > SFDX_SIT01'
 
     - name: 'Authenticate against dev hub'
-      run: node_modules/sfdx-cli/bin/run force:auth:sfdxurl:store -f SFDX_SIT01 -s -a 
+      run: node_modules/sfdx-cli/bin/run force:auth:sfdxurl:store -f SFDX_SIT01 -s -a LRQA
         
     - name: Run Apex test
       run: 
